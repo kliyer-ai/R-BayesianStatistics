@@ -184,7 +184,7 @@ model3.spec = textConnection(model3.string)
 jagsmodel3 <- jags.model(model3.spec,
                          data = list('N' = N,                    # the number of data points
                                      'x' = x,                    # the observations
-                                     'prior_mu' = 0,
+                                     'prior_mu' = 5,
                                      'prior_tau' = 1/5^2,
                                      'a' = 1,
                                      'b' = 1
@@ -198,3 +198,28 @@ samples = coda.samples(jagsmodel3,
 
 
 # plot/interpret the results
+
+mcmcsummary = summary(samples)
+mcmcsummary $ statistics
+
+plotPost(samples[,'mu'], xlab = 'guessed mean')
+diagMCMC(codaObject = samples, parName = 'mu')
+
+plotPost(samples[,'sigma'], xlab = 'guessed sigma')
+diagMCMC(codaObject = samples, parName = 'sigma')
+
+plotGaussian(x , mcmcsummary$statistics[1], mcmcsummary$statistics[2])
+
+####################################################################################
+N = 40
+P = 15
+
+Z = rep(0,P)
+
+for(i in 1:P){
+    Z[i] = rbinom(1,1, 0.5)
+}
+    
+
+
+
