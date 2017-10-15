@@ -26,13 +26,11 @@ exammodel1.string = "
         }
     
         psi <- 0.5
-        phi ~ dbeta(4,1)
-        
-        
+        phi ~ dbeta(3 ,1)
 
     ## Likelihood
     for(i in 1:p){
-        k[i] ~ dbin(equals(z[i]*psi + equals(z[i],1)*phi, n)
+        k[i] ~ dbin(equals(z[i],0)*psi + equals(z[i],1)*phi, n)
     }
   }
 "
@@ -81,12 +79,26 @@ p = length(k)
 exammodel2.string = "
   model {
     ## Prior
+    mu <- 0.8
+    kappa <- 10
 
+    a <- mu*kappa
+    b <- (1-mu)*kappa
+
+    psi <- 0.5
+    for(i in 1:p){
+        z[i] ~ dbern(0.5)
+        phi[i] ~ dbeta(a, b)
+        p[i] <- equals(z[i],0)*psi + equals(z[i],1)*phi[i]
+    }
+    
     
 
-    ## Likelihood    
-
     
+    ## Likelihood
+    for(i in 1:p){
+        k[i] ~ dbin(p[i], n)
+    }
   }
 "
 
@@ -105,13 +117,16 @@ jagsmodel2 <- jags.model(exammodel2.spec,
 
 # Collect samples to approximate the posterior distribution.
 model2samples = coda.samples(jagsmodel2,
-                           c(''), # which variables do you want to monitor?
+                           c('z', 'phi', 'theta'), # which variables do you want to monitor?
                            n.iter = mcmciterations)
 
 
 # Add your analyses on the collected samples here:
+mcmcsummary = summary(model2samples)
+mcmcsummary $ statistics
 
-
+plotPost(model2samples[,'z[1]'], xlab = 'survival probability')
+diagMCMC(codaObject = model2samples, parName = 'z[1]')
 
 #----------   Model 3: easy and difficult questions   --------------
 
@@ -135,17 +150,39 @@ k1[8,] = c( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 k1[9,] = c( 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1)
 k1[10,] = c( 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0)
 
+k1[1,13] = NA
+k1[8,5] = NA
+k1[10,18] = NA
+
 
 # THE MODEL
 exammodel3.string = "
   model {
-    ## Prior
+## Prior
+a <- 1
+b <- 1
+
+psi <- 0.5
+
+for(i in 1:n){
+z[i] ~ dbern(0.5)
+phi[i] ~ dbeta(a, b)
+p[i] <- equals(z[i],0)*psi + equals(z[i],1)*phi[i]
+}
+
+for(i in 1:m){
+    q[i] ~ dbeta(a, 5)
+}
 
 
-    ## Likelihood  
-  }
+## Likelihood
+for(i in 1:n){
+    for(j in 1:m){
+        k[i,j] ~ dbern(p[i]*q[j])
+    }
+}
+}
 "
-
 
 # JAGS usually reads models from a text file; here we use a string as a fake file.   
 exammodel3.spec = textConnection(exammodel3.string)
@@ -162,11 +199,13 @@ jagsmodel3 <- jags.model(exammodel3.spec,
 
 # Collect samples to approximate the posterior distribution.
 model3samples = coda.samples(jagsmodel3,
-                             c(''), # which variables do you want to monitor
+                             c('k', 'p', 'q'), # which variables do you want to monitor
                              n.iter = mcmciterations)
 
 # Add your analyses on the collected samples here:
+mcmcsummary = summary(model3samples)
 
+mcmcsummary$statistics
 
 #----------   Model 4: differences between groups   --------------
 
@@ -175,7 +214,7 @@ graphics.off() # This closes all of R's graphics windows.
 rm(list=ls())  # Careful! This clears all of R's memory!
 
 n1 = 50
-n2 = 49
+n2 = 49 #63
 k1 = 37
 k2 = 48
 
@@ -184,9 +223,14 @@ k2 = 48
 # THE MODEL
 exammodel3.string = "
 model {
-  ## Prior 
+  ## Prior
+    theta1 ~ dbeta(1,1)
+    theta2 ~ dbeta(1,1)
+    roh <- theta1 - theta2
 
   ## Likelihood
+    k1 ~ dbin(theta1, n1)
+    k2 ~ dbin(theta2, n2)
 }
 "
 
@@ -207,9 +251,11 @@ jagsmodel3 <- jags.model(exammodel3.spec,
 
 # Collect samples to approximate the posterior distribution.
 model3samples = coda.samples(jagsmodel3,
-                             c(''), # which variables do you want to monitor
+                             c('roh'), # which variables do you want to monitor
                              n.iter = mcmciterations)
 
 # Add your analyses on the collected samples here:
+mcmcsummary = summary(model3samples)
 
+mcmcsummary$statistics
 
