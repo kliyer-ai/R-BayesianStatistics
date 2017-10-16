@@ -31,7 +31,7 @@ plotGaussian <- function(data, mean, sd) {
 # Set the initial parameters
 
 sigma = 2.0
-N = 1000
+N = 100
 mu = 7
 
 # Generate observations here
@@ -86,7 +86,7 @@ diagMCMC(codaObject = samples, parName = 'mu')
 
 # Set the initial parameters
 sigma = 2.0
-N = 1000
+N = 100
 mu = 7
 
 # Generate observations here
@@ -108,8 +108,6 @@ model1.string = "
     for(i in 1:N){
     x[i] ~ dnorm(mu, 1/sigma^2)
     }
-    
-    
   }
 "
 
@@ -172,8 +170,6 @@ model3.string = "
     for(i in 1:N){
     x[i] ~ dnorm(mu, 1/sigma^2)
     }
-
-
 }
 "
 
@@ -211,15 +207,3 @@ diagMCMC(codaObject = samples, parName = 'sigma')
 plotGaussian(x , mcmcsummary$statistics[1], mcmcsummary$statistics[2])
 
 ####################################################################################
-N = 40
-P = 15
-
-Z = rep(0,P)
-
-for(i in 1:P){
-    Z[i] = rbinom(1,1, 0.5)
-}
-    
-
-
-

@@ -1,4 +1,3 @@
-
 # Optional generic preliminaries:
 graphics.off() # This closes all of R's graphics windows.
 rm(list=ls())  # Careful! This clears all of R's memory!
@@ -26,7 +25,7 @@ exammodel1.string = "
         }
     
         psi <- 0.5
-        phi ~ dbeta(3 ,1)
+        phi ~ dbeta(1 ,1)
 
     ## Likelihood
     for(i in 1:p){
@@ -58,6 +57,7 @@ model1samples = coda.samples(jagsmodel1,
 # Add your analyses based on the collected samples here:
 mcmcsummary = summary(model1samples)
 model1samples
+diagMCMC(codaObject = model1samples, parName = 'phi')
 
 #----------   Model 2: exam scores with individual differences   --------------
 
@@ -91,8 +91,6 @@ exammodel2.string = "
         phi[i] ~ dbeta(a, b)
         p[i] <- equals(z[i],0)*psi + equals(z[i],1)*phi[i]
     }
-    
-    
 
     
     ## Likelihood
@@ -160,7 +158,7 @@ exammodel3.string = "
   model {
 ## Prior
 a <- 1
-b <- 1
+b <- 1  #choose high value for hard quesions
 
 psi <- 0.5
 
@@ -171,7 +169,7 @@ p[i] <- equals(z[i],0)*psi + equals(z[i],1)*phi[i]
 }
 
 for(i in 1:m){
-    q[i] ~ dbeta(a, 5)
+    q[i] ~ dbeta(a, b)
 }
 
 
@@ -226,7 +224,7 @@ model {
   ## Prior
     theta1 ~ dbeta(1,1)
     theta2 ~ dbeta(1,1)
-    roh <- theta1 - theta2
+    delta <- theta1 - theta2
 
   ## Likelihood
     k1 ~ dbin(theta1, n1)
@@ -251,11 +249,12 @@ jagsmodel3 <- jags.model(exammodel3.spec,
 
 # Collect samples to approximate the posterior distribution.
 model3samples = coda.samples(jagsmodel3,
-                             c('roh'), # which variables do you want to monitor
+                             c('delta'), # which variables do you want to monitor
                              n.iter = mcmciterations)
 
 # Add your analyses on the collected samples here:
 mcmcsummary = summary(model3samples)
 
 mcmcsummary$statistics
-
+plotPost(model3samples[,'delta'], xlab = 'guessed delta')
+diagMCMC(codaObject = model3samples, parName = 'delta')
